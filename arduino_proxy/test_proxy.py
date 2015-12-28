@@ -60,11 +60,11 @@ t = time.time() + 2
 while time.time() < t:
     echo()
 
-MAXT = MAX/4
+MAXT = MAX/2
 
 # Run
 for t in range(MAXT):
-    send(t, MID, MID, MID)
+    send(t, MID, MID, MID + t)
 #    time.sleep(.01)
 
 for t in range(MAXT, 0, -1):

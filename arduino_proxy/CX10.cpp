@@ -218,7 +218,6 @@ CX10::CX10() {
 
 static void print4(const uint8_t d[4]) {
     Serial.print(d[0], HEX);
-    Serial.print(':');
     Serial.print(d[1], HEX);
     Serial.print(':');
     Serial.print(d[2], HEX);

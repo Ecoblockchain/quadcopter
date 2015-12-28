@@ -14,7 +14,7 @@ void setup()
   Serial.begin(115200);
   Serial.println("Arduino alive");
   delay(1000);
-    Serial.println("Arduino alive again");
+  Serial.println("Arduino alive again");
   transmitter = new CX10();
   if (transmitter->isHealthy())
     Serial.println("XN297 alive");
@@ -25,7 +25,9 @@ void setup()
     transmitter->loop();
     // I cannot reliably bind more than 2.
     // If its a CX-10A and a CX-10 it appears the 10A has to be switched on first.
-    if (transmitter->boundCraft() > 1)
+    //if (transmitter->boundCraft() > 1)
+    // for now, just bind one
+    if (transmitter->boundCraft() > 0)
       break;
   }
   transmitter->stopBinding();
