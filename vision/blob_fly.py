@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 
 #cap = cv2.VideoCapture("cap4.avi")
 cap = cv2.VideoCapture(1)
@@ -116,16 +117,16 @@ while time.time() < t:
 
 # Copter is allegedly ready :-)
 
-throttle = MAX/2 - 140
-EN = MID - 25
+throttle = MAX/2 - 100
 #EN = MID
+EN = MID + 50
 elevator = EN
-AN = MID + 40
 #AN = MID
+AN = MID + 40
 aileron = AN
-LIMIT = 400
+#LIMIT = 400
 
-TH = 40
+TZ = math.sqrt(40)
 TX = None
 TY = None
 TXV = 0
@@ -134,12 +135,13 @@ TYV = 0
 TA = 1
 
 # Strength
-#S = .05 - not bad, but still increasing
-#S = .02 - worked once, but not the next time
-#S = .006
 S = .03
 
+# Y strength is SY * Y
 SY = 1
+
+# Z strength (independent of S)
+ZS = .2
 
 VCAP = 50
 
@@ -156,18 +158,23 @@ while True:
             TY = bpt[1]
             px = TX
             py = TY
+            pz = math.sqrt(bs)
             x = TX
             y = TY
+            z = pz
             xv = 0
             yv = 0
+            zv = 0
             pxv = 0
             pyv = 0
+            pzv = 0
             xa = 0
             ya = 0
+            za = 0
             pt = t
             pa = aileron
             pe = elevator
-
+            pth = throttle
             print 'TARGET =', TX, TY
             continue
 
@@ -175,9 +182,26 @@ while True:
         dt = t - pt
         alpha = dt / (TC + dt)
 
-        # Height
+        # Z
+        zm = math.sqrt(bs)
+        z = alpha * zm + (1 - alpha) * z
+        dz = TZ - z
+
+        # Z'
+        tzv = dz
+        zvm = (z - pz) / dt
+        zv = alpha * zvm + (1 - alpha) * zv
+
+        # Z''
+        tza = (tzv - zv) / TA
+        zam = (zv - pzv) / dt
+        za = alpha * zam + (1 - alpha) * za
+
+        throttle += (tza - za) * ZS
+        throttle = limit(throttle, MIN, MAX)
+
         #if bs < TH:
-        throttle += (TH - bs) / 80
+        #throttle += (TH - bs) / 80
         #else:
         #    throttle -= (bs - TH) / 40
 
@@ -236,26 +260,19 @@ while True:
         sende = int(elevator)
         senda = int(aileron)
 
-#         if dx < -50:
-#             senda = AN - 150
-#         elif dx > 50:
-#             senda = AN + 150
-
-#         if dy < -50:
-#             sende = EN + 150
-#         elif dy > 50:
-#             sende = EN - 150
-
-        print t - pt, bs, throttle, '|', x, txv, xvm, xv, txa, xa, senda, '|', y, tyv, yv, yvm, tya, ya, sende
+        print bs, tza, za, throttle, '|', x, txv, xvm, xv, txa, xa, senda, '|', y, tyv, yv, yvm, tya, ya, sende
 
         # Prev
         px = x
         py = y
+        pz = z
         pt = t
         pxv = xv
         pyv = yv
+        pzv = zv
         pa = aileron
         pe = elevator
+        pth = throttle
 
     send(int(throttle), MID, sende, senda)
     k = cv2.waitKey(1)
