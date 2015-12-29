@@ -141,7 +141,7 @@ S = .03
 SY = 1
 
 # Z strength (independent of S)
-ZS = .2
+ZS = .05
 
 VCAP = 50
 
@@ -254,7 +254,6 @@ while True:
         #ep = (elevator - pe) / (t - pt)
         #elevator -= ep / 50 * S
         
-#        elevator = limit(elevator, EN - LIMIT, EN + LIMIT)
         elevator = limit(elevator, MIN, MAX)
 
         sende = int(elevator)
