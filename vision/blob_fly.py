@@ -1,6 +1,16 @@
 import cv2
-import numpy as np
 import math
+import numpy as np
+import time
+
+log = open("log." + str(time.time()), "w")
+def wlog(*args):
+    s = ''
+    for arg in args:
+        if s:
+            s += ' '
+        s += str(arg)
+    log.write(s + '\n')
 
 #cap = cv2.VideoCapture("cap4.avi")
 cap = cv2.VideoCapture(1)
@@ -40,7 +50,6 @@ cv2.waitKey(100)
 
 import serial
 import sys
-import time
 
 ser = serial.Serial('/dev/cu.usbserial-DC008KDX', 115200)
 
@@ -135,7 +144,7 @@ TYV = 0
 TA = 1
 
 # Strength
-S = .03
+S = .033
 
 # Y strength is SY * Y
 SY = 1
@@ -145,7 +154,7 @@ ZS = .05
 
 VCAP = 50
 
-TC = .1
+TC = .01
 
 while True:
     ret, frame = cap.read()
@@ -260,6 +269,10 @@ while True:
         senda = int(aileron)
 
         print bs, tza, za, throttle, '|', x, txv, xvm, xv, txa, xa, senda, '|', y, tyv, yv, yvm, tya, ya, sende
+        wlog(t, alpha,
+             xm, x, dx, txv, xvm, xv, txa, xam, xa, aileron,
+             ym, y, dy, tyv, yvm, yv, tya, yam, ya, elevator,
+             zm, z, dz, tzv, zvm, zv, tza, zam, za, throttle)
 
         # Prev
         px = x
