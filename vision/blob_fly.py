@@ -144,7 +144,7 @@ TYV = 0
 TA = 1
 
 # Strength
-S = .033
+S = .03
 
 # Y strength is SY * Y
 SY = 1
