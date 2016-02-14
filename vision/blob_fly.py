@@ -126,9 +126,11 @@ while time.time() < t:
 
 # Copter is allegedly ready :-)
 
-throttle = MAX/2 - 100
-#EN = MID
-EN = MID + 50
+
+TN = MID - 100
+throttle = TN
+EN = MID
+#EN = MID + 50
 elevator = EN
 #AN = MID
 AN = MID + 40
@@ -143,6 +145,15 @@ TYV = 0
 
 TA = 1
 
+# PID parameters
+KP = 1.15
+KI = .1
+KD = .5
+
+KPZ = 20
+KIZ = 20
+KDZ = 5
+
 # Strength
 S = .03
 
@@ -155,6 +166,7 @@ ZS = .05
 VCAP = 50
 
 TC = .01
+TCZ = .1
 
 while True:
     ret, frame = cap.read()
@@ -168,6 +180,13 @@ while True:
             px = TX
             py = TY
             pz = math.sqrt(bs)
+            pdx = 0
+            pdy = 0
+            pdz = TZ - pz
+            idx = 0
+            idy = 0
+            idz = 0
+            ddz = 0
             x = TX
             y = TY
             z = pz
@@ -190,10 +209,11 @@ while True:
         # Time
         dt = t - pt
         alpha = dt / (TC + dt)
+        alphaz = dt / (TCZ + dt)
 
         # Z
         zm = math.sqrt(bs)
-        z = alpha * zm + (1 - alpha) * z
+        z = alphaz * zm + (1 - alphaz) * z
         dz = TZ - z
 
         # Z'
@@ -206,8 +226,18 @@ while True:
         zam = (zv - pzv) / dt
         za = alpha * zam + (1 - alpha) * za
 
-        throttle += (tza - za) * ZS
+        #throttle += (tza - za) * ZS
+
+        # I(dz), D(dz)
+        idz += dz * dt
+        # D(dz) needs smoothing
+        ddzm = (dz - pdz) / dt
+        ddz = alphaz * ddzm + (1 - alphaz) * ddz
+
+        throttle = TN + KPZ * dz + KIZ * idz + KDZ * ddz
+
         throttle = limit(throttle, MIN, MAX)
+        
 
         #if bs < TH:
         #throttle += (TH - bs) / 80
@@ -231,7 +261,13 @@ while True:
         txa = (txv - xv) / TA # target acceleration takes us to txv in .2s
         xam = (xv - pxv) / dt
         xa = alpha * xam + (1 - alpha) * xa
-        aileron += (txa - xa) * S
+#        aileron += (txa - xa) * S
+
+        # I(dx), D(dx)
+        idx += dx * dt
+        ddx = (dx - pdx) / dt
+
+        aileron = AN + KP * dx + KI * idx + KD * ddx
 
         # damping
         #ap = (aileron - pa) / (t - pt)
@@ -257,7 +293,13 @@ while True:
         tya = (tyv - yv) / TA # target acceleration takes us to txv in .2s
         yam = (yv - pyv) / dt
         ya = alpha * yam + (1 - alpha) * ya
-        elevator -= (tya - ya) * S * SY
+#        elevator -= (tya - ya) * S * SY
+
+        # I(dy), D(dy)
+        idy += dy * dt
+        ddy = (dy - pdy) / dt
+
+        elevator = EN - KP * dy - KI * idy - KD * ddy
 
         # damping
         #ep = (elevator - pe) / (t - pt)
@@ -269,15 +311,23 @@ while True:
         senda = int(aileron)
 
         print bs, tza, za, throttle, '|', x, txv, xvm, xv, txa, xa, senda, '|', y, tyv, yv, yvm, tya, ya, sende
-        wlog(t, alpha,
-             xm, x, dx, txv, xvm, xv, txa, xam, xa, aileron,
-             ym, y, dy, tyv, yvm, yv, tya, yam, ya, elevator,
-             zm, z, dz, tzv, zvm, zv, tza, zam, za, throttle)
+#        wlog(t, alpha,
+#             xm, x, dx, txv, xvm, xv, txa, xam, xa, aileron,
+#             ym, y, dy, tyv, yvm, yv, tya, yam, ya, elevator,
+#             zm, z, dz, tzv, zvm, zv, tza, zam, za, throttle)
+
+        wlog(t, dt,
+             xm, dx, idx, ddx, aileron,
+             ym, dy, idy, ddy, elevator,
+             zm * 100, dz * KPZ , idz * KIZ, ddz * KDZ, throttle)
 
         # Prev
         px = x
         py = y
         pz = z
+        pdx = dx
+        pdy = dy
+        pdz = dz
         pt = t
         pxv = xv
         pyv = yv
