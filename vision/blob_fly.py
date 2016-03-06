@@ -126,8 +126,7 @@ while time.time() < t:
 
 # Copter is allegedly ready :-)
 
-
-TN = MID - 100
+TN = MID - 120
 throttle = TN
 EN = MID
 #EN = MID + 50
@@ -150,9 +149,9 @@ KP = 1.15
 KI = .1
 KD = .5
 
-KPZ = 20
-KIZ = 20
-KDZ = 5
+KPZ = 5
+KIZ = 2
+KDZ = 0
 
 # Strength
 S = .03
