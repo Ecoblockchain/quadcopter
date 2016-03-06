@@ -189,19 +189,7 @@ while True:
             x = TX
             y = TY
             z = pz
-            xv = 0
-            yv = 0
-            zv = 0
-            pxv = 0
-            pyv = 0
-            pzv = 0
-            xa = 0
-            ya = 0
-            za = 0
             pt = t
-            pa = aileron
-            pe = elevator
-            pth = throttle
             print 'TARGET =', TX, TY
             continue
 
@@ -215,18 +203,6 @@ while True:
         z = alphaz * zm + (1 - alphaz) * z
         dz = TZ - z
 
-        # Z'
-        tzv = dz
-        zvm = (z - pz) / dt
-        zv = alpha * zvm + (1 - alpha) * zv
-
-        # Z''
-        tza = (tzv - zv) / TA
-        zam = (zv - pzv) / dt
-        za = alpha * zam + (1 - alpha) * za
-
-        #throttle += (tza - za) * ZS
-
         # I(dz), D(dz)
         idz += dz * dt
         # D(dz) needs smoothing
@@ -234,86 +210,36 @@ while True:
         ddz = alphaz * ddzm + (1 - alphaz) * ddz
 
         throttle = TN + KPZ * dz + KIZ * idz + KDZ * ddz
-
         throttle = limit(throttle, MIN, MAX)
         
-
-        #if bs < TH:
-        #throttle += (TH - bs) / 80
-        #else:
-        #    throttle -= (bs - TH) / 40
-
         # X
         xm = bpt[0]
         x = alpha * xm + (1 - alpha) * x
         dx = TX - x
-#        aileron += dx * S
-
-        # X'
-        txv = dx  # target velocity takes us back to TX in 1s
-        txv = vlimit(txv, VCAP)
-        xvm = (x - px) / dt
-        xv = alpha * xvm + (1 - alpha) * xv
-#        aileron += (txv - xv) * S
-
-        # X''
-        txa = (txv - xv) / TA # target acceleration takes us to txv in .2s
-        xam = (xv - pxv) / dt
-        xa = alpha * xam + (1 - alpha) * xa
-#        aileron += (txa - xa) * S
 
         # I(dx), D(dx)
         idx += dx * dt
         ddx = (dx - pdx) / dt
 
         aileron = AN + KP * dx + KI * idx + KD * ddx
-
-        # damping
-        #ap = (aileron - pa) / (t - pt)
-        #aileron -= ap / 50 * S
-
-#        aileron = limit(aileron, AN - LIMIT, AN + LIMIT)
         aileron = limit(aileron, MIN, MAX)
 
         # Y
         ym = bpt[1]
         y = alpha * ym + (1 - alpha) * y
         dy = TY - y
-#        elevator -= dy * S * SY
-
-        # Y'
-        tyv = dy
-        tyv = vlimit(tyv, VCAP)
-        yvm = (y - py) / dt
-        yv = alpha * yvm + (1 - alpha) * yv
-#        elevator -= (tyv - yv) * S * SY
-        
-        # Y''
-        tya = (tyv - yv) / TA # target acceleration takes us to txv in .2s
-        yam = (yv - pyv) / dt
-        ya = alpha * yam + (1 - alpha) * ya
-#        elevator -= (tya - ya) * S * SY
 
         # I(dy), D(dy)
         idy += dy * dt
         ddy = (dy - pdy) / dt
 
         elevator = EN - KP * dy - KI * idy - KD * ddy
-
-        # damping
-        #ep = (elevator - pe) / (t - pt)
-        #elevator -= ep / 50 * S
-        
         elevator = limit(elevator, MIN, MAX)
 
         sende = int(elevator)
         senda = int(aileron)
 
-        print bs, tza, za, throttle, '|', x, txv, xvm, xv, txa, xa, senda, '|', y, tyv, yv, yvm, tya, ya, sende
-#        wlog(t, alpha,
-#             xm, x, dx, txv, xvm, xv, txa, xam, xa, aileron,
-#             ym, y, dy, tyv, yvm, yv, tya, yam, ya, elevator,
-#             zm, z, dz, tzv, zvm, zv, tza, zam, za, throttle)
+        print bs, throttle, '|', x, senda, '|', y, sende
 
         wlog(t, dt,
              xm, dx, idx, ddx, aileron,
@@ -328,12 +254,6 @@ while True:
         pdy = dy
         pdz = dz
         pt = t
-        pxv = xv
-        pyv = yv
-        pzv = zv
-        pa = aileron
-        pe = elevator
-        pth = throttle
 
     send(int(throttle), MID, sende, senda)
     k = cv2.waitKey(1)
